@@ -9,8 +9,11 @@
 import UIKit
 import RealmSwift
 import SwipeCellKit
+import ChameleonFramework
+
 class ToDoListViewController: UITableViewController  {
    
+    @IBOutlet weak var searchBar: UISearchBar!
     var todoItems :Results<Item>?
     let realm = try! Realm()
     var selectedCategory : Category?{
@@ -18,17 +21,39 @@ class ToDoListViewController: UITableViewController  {
             loadItems()
         }
     }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-
-        print(dataFilePath)
-tableView.rowHeight = 80.0
+      
+        tableView.rowHeight = 80.0
+        tableView.separatorStyle = .none
         
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        
+        title = selectedCategory?.name
+        guard let navbar = navigationController?.navigationBar else{return}
+        
+        if let colorhex = selectedCategory?.colorString {
+            
+            navbar.barTintColor = UIColor(hexString:colorhex )
+            
+        navbar.tintColor = UIColor(contrastingBlackOrWhiteColorOn: UIColor(hexString:colorhex ), isFlat:true)
+            navbar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor : UIColor(contrastingBlackOrWhiteColorOn: UIColor(hexString:colorhex ), isFlat:true) ]
+            
+        searchBar.barTintColor = UIColor(hexString:colorhex )
+        }
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+         let colorhex = "1D9BF6"
+        guard let navbar = navigationController?.navigationBar else{return}
+
+            navbar.barTintColor = UIColor(hexString:colorhex )
+            
+            navbar.tintColor = UIColor(contrastingBlackOrWhiteColorOn: UIColor(hexString:colorhex ), isFlat:true)
+            navbar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor : UIColor(contrastingBlackOrWhiteColorOn: UIColor(hexString:colorhex ), isFlat:true) ]
+    }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return todoItems?.count ?? 1
         
@@ -42,6 +67,13 @@ tableView.rowHeight = 80.0
         cell.textLabel?.text = item.title
         
         cell.accessoryType = item.done ?  .checkmark : .none
+        
+        
+        if let color = UIColor(hexString: selectedCategory!.colorString)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat((todoItems?.count)!))
+        {
+         cell.backgroundColor = color
+            cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn:color, isFlat:true)
+        }
         
       }else{
         cell.textLabel?.text = "No Items Added"
