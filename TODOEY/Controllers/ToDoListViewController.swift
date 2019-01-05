@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import SwipeCellKit
 class ToDoListViewController: UITableViewController  {
    
     var todoItems :Results<Item>?
@@ -24,7 +25,7 @@ class ToDoListViewController: UITableViewController  {
         let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
 
         print(dataFilePath)
-
+tableView.rowHeight = 80.0
         
     }
 
@@ -33,7 +34,8 @@ class ToDoListViewController: UITableViewController  {
         
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)as! SwipeTableViewCell
+        cell.delegate = self
         
       if  let item = todoItems?[indexPath.row]
       {
@@ -157,3 +159,30 @@ extension ToDoListViewController : UISearchBarDelegate
     }
 }
 
+extension ToDoListViewController : SwipeTableViewCellDelegate{
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+        guard orientation == .right else { return nil }
+        
+        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+            
+            
+            if let deletionItem = self.todoItems?[indexPath.row]{
+                do{
+                    
+                    try self.realm.write {
+                        self.realm.delete(deletionItem)
+                    }
+                }catch{
+                    print("error while deleting")
+                }
+                tableView.reloadData()
+                
+            }
+        }
+        
+        // customize the action appearance
+        deleteAction.image = UIImage(named: "trash-icon")
+        
+        return [deleteAction]
+}
+}
